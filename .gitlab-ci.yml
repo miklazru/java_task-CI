@@ -1,0 +1,70 @@
+image: maven:3.8.3-openjdk-17
+
+stages:
+  - lint
+  - test
+  - package
+  - report
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+
+cache:
+  paths:
+    - task-ci/.m2/repository/
+    - task-ci/target/
+
+# Stage: Lint
+checkstyle:
+  stage: lint
+  script:
+    - cd task-ci
+    - mvn validate
+  allow_failure: false
+  tags:
+    - java
+    - maven
+    - linux
+
+# Stage: Test
+unit-tests:
+  stage: test
+  script:
+    - cd task-ci
+    - mvn test
+  artifacts:
+    reports:
+      junit: task-ci/target/surefire-reports/*.xml
+  allow_failure: false
+  tags:
+    - java
+    - maven
+    - linux
+
+# Stage: Package
+build-artifact:
+  stage: package
+  script:
+    - cd task-ci
+    - mvn package -DskipTests
+  artifacts:
+    paths:
+      - task-ci/target/*.jar
+  tags:
+    - java
+    - maven
+    - linux
+
+# Stage: Report
+reports:
+  stage: report
+  script:
+    - cd task-ci
+    - mvn site
+  artifacts:
+    paths:
+      - task-ci/target/site/
+  tags:
+    - java
+    - maven
+    - linux
